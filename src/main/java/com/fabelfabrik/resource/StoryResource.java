@@ -7,6 +7,7 @@ import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
 import org.jboss.logging.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Path("/api/stories")
@@ -53,6 +54,33 @@ public class StoryResource {
             story.content = updatedStory.content;
             story.images = updatedStory.images;
             story.audio = updatedStory.audio;
+            story.persistOrUpdate();
+        }
+        return story;
+    }
+
+    @PUT
+    @Path("/{id}/images")
+    public Story addImages(@PathParam("id") String id, List<String> imagePaths) {
+        LOG.infof("Adding images to story with id %s: %s", id, imagePaths);
+        Story story = Story.findById(new ObjectId(id));
+        if (story != null) {
+            if (story.images == null) {
+                story.images = new ArrayList<>();
+            }
+            story.images.addAll(imagePaths);
+            story.persistOrUpdate();
+        }
+        return story;
+    }
+
+    @DELETE
+    @Path("/{id}/images/{imagePath: .+}")
+    public Story removeImage(@PathParam("id") String id, @PathParam("imagePath") String imagePath) {
+        LOG.infof("Removing image %s from story with id %s", imagePath, id);
+        Story story = Story.findById(new ObjectId(id));
+        if (story != null && story.images != null) {
+            story.images.remove(imagePath);
             story.persistOrUpdate();
         }
         return story;
