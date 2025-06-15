@@ -1,6 +1,7 @@
 package com.fabelfabrik.resource;
 
 import com.fabelfabrik.model.Story;
+import io.quarkus.mongodb.panache.PanacheMongoEntityBase;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
@@ -17,7 +18,9 @@ public class StoryResource {
 
     @GET
     public List<Story> getAll() {
-        return Story.listAll();
+        List<Story> stories = Story.listAll();
+        LOG.infof("Found %d stories", stories.size());
+        return stories;
     }
 
     @POST
