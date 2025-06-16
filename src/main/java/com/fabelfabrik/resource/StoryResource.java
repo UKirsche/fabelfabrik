@@ -1,7 +1,6 @@
 package com.fabelfabrik.resource;
 
 import com.fabelfabrik.model.Story;
-import io.quarkus.mongodb.panache.PanacheMongoEntityBase;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
@@ -53,7 +52,7 @@ public class StoryResource {
             story.title = updatedStory.title;
             story.content = updatedStory.content;
             story.images = updatedStory.images;
-            story.audio = updatedStory.audio;
+            story.audioUrl = updatedStory.audioUrl;
             story.persistOrUpdate();
         }
         return story;

@@ -57,7 +57,7 @@ public class AdminStoryResource {
         story.pageCount = form.pageCount;
         story.pdfUrl = pdfResult.url;
         story.coverImageUrl = imageResult.url;
-        story.audio = audioResult.url;
+        story.audioUrl = audioResult.url;
         story.persist();
         return story;
     }
