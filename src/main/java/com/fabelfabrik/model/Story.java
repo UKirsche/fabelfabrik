@@ -5,7 +5,6 @@ import java.util.List;
 
 import lombok.*;
 
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(callSuper = true)

@@ -2,97 +2,118 @@ package com.fabelfabrik.resource;
 
 import com.fabelfabrik.model.Story;
 import com.fabelfabrik.utils.FileStorageService;
-import jakarta.ws.rs.Path;
-import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
-import org.jboss.logging.Logger;
-
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.io.*;
-import java.nio.file.*;
-import java.util.UUID;
+import org.jboss.logging.Logger;
+import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
+
+import java.io.InputStream;
 
 @Path("/api/admin/story")
 @RolesAllowed("admin")
+@Produces(MediaType.APPLICATION_JSON)
 public class AdminStoryResource {
 
-    private static final Logger LOG = Logger.getLogger(AdminStoryResource.class);
+    @Inject
+    Logger LOG;
 
     @Inject
     FileStorageService fileStorageService;
 
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response uploadStory(@MultipartForm StoryUploadForm form) {
-        String pdfUrl = null;
-        String coverImageUrl = null;
-        String audio = null;
 
-        // Ensure upload directories exist
-        fileStorageService.init();
-
-        // PDF speichern
-        if (form.pdf != null && form.pdfFileName != null) {
-            try {
-                String pdfName = UUID.randomUUID() + "_" + form.pdfFileName;
-                java.nio.file.Path uploadPath = Paths.get("uploads");
-                java.nio.file.Path pdfPath = ((java.nio.file.Path) uploadPath).resolve(pdfName);
-
-                try (OutputStream out = Files.newOutputStream(pdfPath)) {
-                    form.pdf.transferTo(out);
-                    pdfUrl = pdfPath.toString();
-                    LOG.infof("PDF stored at: %s", pdfUrl);
-                }
-            } catch (IOException e) {
-                LOG.error("PDF-Upload fehlgeschlagen", e);
-                return Response.serverError().entity("PDF-Upload fehlgeschlagen: " + e).build();
-            }
+        // Alle Uploads verarbeiten
+        FileUploadResult pdfResult = processPdfUpload(form);
+        if (!pdfResult.success) {
+            return Response.serverError().entity(pdfResult.error).build();
         }
 
-        // Coverbild speichern
-        if (form.coverImage != null && form.coverImageFileName != null) {
-            try {
-                coverImageUrl = fileStorageService.storeImage(form.coverImage, form.coverImageFileName);
-                LOG.infof("Cover image stored at: %s", coverImageUrl);
-            } catch (Exception e) {
-                LOG.error("Bild-Upload fehlgeschlagen", e);
-                return Response.serverError().entity("Bild-Upload fehlgeschlagen: " + e).build();
-            }
+        FileUploadResult imageResult = processCoverImageUpload(form);
+        if (!imageResult.success) {
+            return Response.serverError().entity(imageResult.error).build();
         }
 
-        // Audio speichern
-        if (form.audio != null && form.audioFileName != null) {
-            try {
-                String audioName = UUID.randomUUID() + "_" + form.audioFileName;
-                java.nio.file.Path uploadPath = Paths.get("uploads");
-                java.nio.file.Path audioPath = uploadPath.resolve(audioName);
-
-                try (OutputStream out = Files.newOutputStream(audioPath)) {
-                    form.audio.transferTo(out);
-                    audio = audioPath.toString();
-                    LOG.infof("Audio stored at: %s", audio);
-                }
-            } catch (IOException e) {
-                LOG.error("Audio-Upload fehlgeschlagen", e);
-                return Response.serverError().entity("Audio-Upload fehlgeschlagen: " + e).build();
-            }
+        FileUploadResult audioResult = processAudioUpload(form);
+        if (!audioResult.success) {
+            return Response.serverError().entity(audioResult.error).build();
         }
 
-        // Story speichern
+        // Story erstellen und speichern
+        Story story = of(form, pdfResult, imageResult, audioResult);
+
+        LOG.infof("Story created: %s", story);
+        return Response.ok(story).build();
+    }
+
+    private static Story of(StoryUploadForm form, FileUploadResult pdfResult, FileUploadResult imageResult, FileUploadResult audioResult) {
         Story story = new Story();
         story.title = form.title;
         story.description = form.description;
         story.pageCount = form.pageCount;
-        story.pdfUrl = pdfUrl;
-        story.coverImageUrl = coverImageUrl;
-        story.audio = audio;
+        story.pdfUrl = pdfResult.url;
+        story.coverImageUrl = imageResult.url;
+        story.audio = audioResult.url;
         story.persist();
+        return story;
+    }
 
-        LOG.infof("Story created: %s", story);
-        return Response.ok(story).build();
+    // Einzelne Methoden für jeden Dateityp
+    private FileUploadResult processPdfUpload(StoryUploadForm form) {
+        return processFileUpload(form.pdf, form.pdfFileName,
+                fileStorageService::storePdf, "PDF");
+    }
+
+    private FileUploadResult processCoverImageUpload(StoryUploadForm form) {
+        return processFileUpload(form.coverImage, form.coverImageFileName,
+                fileStorageService::storeImage, "Bild");
+    }
+
+    private FileUploadResult processAudioUpload(StoryUploadForm form) {
+        return processFileUpload(form.audio, form.audioFileName,
+                fileStorageService::storeAudio, "Audio");
+    }
+
+    // Generische Upload-Methode
+    private FileUploadResult processFileUpload(InputStream fileStream, String fileName,
+                                               FileUploadFunction uploadFunction, String fileType) {
+        if (fileStream == null || fileName == null) {
+            return FileUploadResult.notPresent();
+        }
+
+        try {
+            String url = uploadFunction.upload(fileStream, fileName);
+            LOG.infof("%s stored at: %s", fileType, url);
+            return FileUploadResult.success(url);
+        } catch (Exception e) {
+            LOG.error(fileType + "-Upload fehlgeschlagen", e);
+            return FileUploadResult.failure(fileType + "-Upload fehlgeschlagen: " + e.getMessage());
+        }
+    }
+
+    // Functional Interface für Upload-Funktionen
+    @FunctionalInterface
+    private interface FileUploadFunction {
+        String upload(InputStream stream, String fileName) throws Exception;
+    }
+
+    // Result-Klasse für Upload-Ergebnisse
+    private record FileUploadResult(String url, boolean success, String error) {
+
+        public static FileUploadResult success(String url) {
+            return new FileUploadResult(url, true, null);
+        }
+
+        public static FileUploadResult failure(String error) {
+            return new FileUploadResult(null, false, error);
+        }
+
+        public static FileUploadResult notPresent() {
+            return new FileUploadResult(null, true, null);
+        }
     }
 }
