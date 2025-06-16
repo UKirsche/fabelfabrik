@@ -29,11 +29,9 @@ public class ImageResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response uploadImage(@RestForm("file") FileUpload file) {
         LOG.infof("Received image upload request: %s", file.fileName());
-        
         try (InputStream inputStream = file.uploadedFile().toFile().toURI().toURL().openStream()) {
             String storedPath = fileStorageService.storeImage(inputStream, file.fileName());
             LOG.infof("Image stored at: %s", storedPath);
-            
             return Response.ok().entity("{\"path\": \"" + storedPath + "\"}").build();
         } catch (IOException e) {
             LOG.error("Failed to process uploaded file", e);
@@ -47,10 +45,8 @@ public class ImageResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response uploadMultipleImages(@RestForm("files") List<FileUpload> files) {
         LOG.infof("Received multiple image upload request: %d files", files.size());
-        
         List<String> storedPaths = new ArrayList<>();
-        
-        for (FileUpload file : files) {
+        files.forEach(file -> {
             try (InputStream inputStream = file.uploadedFile().toFile().toURI().toURL().openStream()) {
                 String storedPath = fileStorageService.storeImage(inputStream, file.fileName());
                 storedPaths.add(storedPath);
@@ -59,8 +55,7 @@ public class ImageResource {
                 LOG.error("Failed to process uploaded file: " + file.fileName(), e);
                 // Continue with other files even if one fails
             }
-        }
-        
+        });
         return Response.ok().entity("{\"paths\": " + storedPaths + "}").build();
     }
 
@@ -68,12 +63,10 @@ public class ImageResource {
     @Path("/{imagePath: .+}")
     public Response getImage(@PathParam("imagePath") String imagePath) {
         LOG.infof("Retrieving image: %s", imagePath);
-        
         File file = fileStorageService.getImage(imagePath);
         if (file == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        
         String contentType = determineContentType(file.getName());
         return Response.ok(file, contentType).build();
     }
