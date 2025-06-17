@@ -1,44 +1,34 @@
 package com.fabelfabrik.resource;
 
-import com.fabelfabrik.utils.FileStorageService;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
-import org.jboss.logging.Logger;
 
 import java.io.File;
+import java.util.Map;
 
 @Path("/api/audio")
-public class AudioResource {
+public class AudioResource extends AbstractMediaResource {
 
-    private static final Logger LOG = Logger.getLogger(AudioResource.class);
-
-    @Inject
-    FileStorageService fileStorageService;
+    private static final Map<String, String> AUDIO_CONTENT_TYPES = Map.of(
+            ".mp3", "audio/mpeg",
+            ".wav", "audio/wav",
+            ".ogg", "audio/ogg",
+            ".m4a", "audio/mp4"
+    );
 
     @GET
     @Path("/{audioPath: .+}")
     public Response getAudio(@PathParam("audioPath") String audioPath) {
-        LOG.infof("Retrieving audio: %s", audioPath);
-        File file = fileStorageService.getAudio(audioPath);
-        if (file == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-        String contentType = determineContentType(file.getName());
-        return Response.ok(file, contentType).build();
+        return getMediaFile(audioPath, "audio");
     }
 
-    private String determineContentType(String fileName) {
-        if (fileName.toLowerCase().endsWith(".mp3")) {
-            return "audio/mpeg";
-        } else if (fileName.toLowerCase().endsWith(".wav")) {
-            return "audio/wav";
-        } else if (fileName.toLowerCase().endsWith(".ogg")) {
-            return "audio/ogg";
-        } else if (fileName.toLowerCase().endsWith(".m4a")) {
-            return "audio/mp4";
-        } else {
-            return "application/octet-stream";
-        }
+    @Override
+    protected File getFileFromStorage(String filePath) {
+        return fileStorageService.getAudio(filePath);
+    }
+
+    @Override
+    protected Map<String, String> getContentTypeMap() {
+        return AUDIO_CONTENT_TYPES;
     }
 }

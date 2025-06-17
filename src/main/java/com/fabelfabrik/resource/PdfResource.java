@@ -1,31 +1,31 @@
 package com.fabelfabrik.resource;
 
-import com.fabelfabrik.utils.FileStorageService;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
-import org.jboss.logging.Logger;
 
 import java.io.File;
+import java.util.Map;
 
-@Path("/api/pdfs")
-public class PdfResource {
+@Path("/api/pdf")
+public class PdfResource extends AbstractMediaResource {
 
-    private static final Logger LOG = Logger.getLogger(PdfResource.class);
-
-    @Inject
-    FileStorageService fileStorageService;
+    private static final Map<String, String> PDF_CONTENT_TYPES = Map.of(
+            ".pdf", "application/pdf"
+    );
 
     @GET
     @Path("/{pdfPath: .+}")
-    public Response getPdf(@PathParam("pdfPath") String pdfPath) {
-        LOG.infof("Retrieving PDF: %s", pdfPath);
-        File file = fileStorageService.getPdf(pdfPath);
-        if (file == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-        return Response.ok(file, "application/pdf").build();
+    public Response getPDF(@PathParam("pdfPath") String pdfPath) {
+        return getMediaFile(pdfPath, "PDF");
+    }
+
+    @Override
+    protected File getFileFromStorage(String filePath) {
+        return fileStorageService.getPdf(filePath);
+    }
+
+    @Override
+    protected Map<String, String> getContentTypeMap() {
+        return PDF_CONTENT_TYPES;
     }
 }
