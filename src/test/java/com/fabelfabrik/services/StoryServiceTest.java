@@ -21,6 +21,7 @@ public class StoryServiceTest {
     private FileUploadResult pdfResult;
     private FileUploadResult imageResult;
     private FileUploadResult audioResult;
+    private FileUploadResult videoResult;
 
     @BeforeEach
     public void setup() {
@@ -35,12 +36,13 @@ public class StoryServiceTest {
         pdfResult = FileUploadResult.success("pdfs/test.pdf");
         imageResult = FileUploadResult.success("images/test.jpg");
         audioResult = FileUploadResult.success("audio/test.mp3");
+        videoResult = FileUploadResult.success("videos/test.mp4");
     }
 
     @Test
     public void testStoryCreation() {
         // When
-        Story story = storyService.of(form, pdfResult, imageResult, audioResult);
+        Story story = storyService.of(form, pdfResult, imageResult, audioResult, videoResult);
 
         // Then
         assertNotNull(story);
@@ -51,6 +53,7 @@ public class StoryServiceTest {
         assertEquals("pdfs/test.pdf", story.pdfUrl);
         assertEquals("images/test.jpg", story.coverImageUrl);
         assertEquals("audio/test.mp3", story.audioUrl);
+        assertEquals("videos/test.mp4", story.videoUrl);
         // Note: We're not asserting the specific value of ttsUrl because it depends on the ElevenLabs API call
     }
 }

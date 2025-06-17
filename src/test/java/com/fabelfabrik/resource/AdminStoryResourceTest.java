@@ -44,6 +44,7 @@ public class AdminStoryResourceTest {
         testStory.coverImageUrl = "images/test.jpg";
         testStory.audioUrl = "audio/test.mp3";
         testStory.ttsUrl = "audio/test_tts.mp3";
+        testStory.videoUrl = "videos/test.mp4";
 
         // Setup mock responses
         when(fileUploadService.processPdfUpload(any(InputStream.class), anyString()))
@@ -55,8 +56,11 @@ public class AdminStoryResourceTest {
         when(fileUploadService.processAudioUpload(any(InputStream.class), anyString()))
                 .thenReturn(FileUploadResult.success("audio/test.mp3"));
 
+        when(fileUploadService.processVideoUpload(any(InputStream.class), anyString()))
+                .thenReturn(FileUploadResult.success("videos/test.mp4"));
+
         when(storyService.of(any(StoryUploadForm.class), any(FileUploadResult.class),
-                any(FileUploadResult.class), any(FileUploadResult.class)))
+                any(FileUploadResult.class), any(FileUploadResult.class), any(FileUploadResult.class)))
                 .thenReturn(testStory);
     }
 
@@ -74,6 +78,8 @@ public class AdminStoryResourceTest {
                 .multiPart("coverImageFileName", "test.jpg")
                 .multiPart("audio", new File("src/test/resources/test.mp3"), "audio/mpeg")
                 .multiPart("audioFileName", "test.mp3")
+                .multiPart("video", new File("src/test/resources/test.mp4"), "video/mp4")
+                .multiPart("videoFileName", "test.mp4")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .when()
                 .post("/api/admin/story")
@@ -86,7 +92,8 @@ public class AdminStoryResourceTest {
                 .body("pdfUrl", is("pdfs/test.pdf"))
                 .body("coverImageUrl", is("images/test.jpg"))
                 .body("audioUrl", is("audio/test.mp3"))
-                .body("ttsUrl", is("audio/test_tts.mp3"));
+                .body("ttsUrl", is("audio/test_tts.mp3"))
+                .body("videoUrl", is("videos/test.mp4"));
     }
 
     @Test
@@ -107,6 +114,8 @@ public class AdminStoryResourceTest {
                 .multiPart("coverImageFileName", "test.jpg")
                 .multiPart("audio", new File("src/test/resources/test.mp3"), "audio/mpeg")
                 .multiPart("audioFileName", "test.mp3")
+                .multiPart("video", new File("src/test/resources/test.mp4"), "video/mp4")
+                .multiPart("videoFileName", "test.mp4")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .when()
                 .post("/api/admin/story")
