@@ -1,6 +1,4 @@
 package com.fabelfabrik.model;
-
-import jakarta.ws.rs.GET;
 import lombok.Getter;
 
 @Getter
@@ -18,11 +16,9 @@ public class FileUploadResult {
     public static FileUploadResult success(String url) {
         return new FileUploadResult(url, true, null);
     }
-
     public static FileUploadResult failure(String error) {
         return new FileUploadResult(null, false, error);
     }
-
     public static FileUploadResult notPresent() {
         return new FileUploadResult(null, true, null);
     }

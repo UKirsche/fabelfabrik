@@ -56,4 +56,23 @@ public class StoryServiceTest {
         assertEquals("videos/test.mp4", story.videoUrl);
         // Note: We're not asserting the specific value of ttsUrl because it depends on the ElevenLabs API call
     }
+
+    @Test
+    public void testLargeStoryContent() {
+        // Create a story with 5000 words
+        StringBuilder largeContent = new StringBuilder();
+        for (int i = 0; i < 5000; i++) {
+            largeContent.append("word").append(i).append(" ");
+        }
+
+        form.content = largeContent.toString();
+
+        // When
+        Story story = storyService.of(form, pdfResult, imageResult, audioResult, videoResult);
+
+        // Then
+        assertNotNull(story);
+        assertEquals(form.content, story.content);
+        assertEquals(5000, story.content.split("\\s+").length);
+    }
 }
