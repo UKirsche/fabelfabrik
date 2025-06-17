@@ -6,7 +6,7 @@ import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.util.Map;
 
-@Path("/api/pdf")
+@Path("/api/pdfs")
 public class PdfResource extends AbstractMediaResource {
 
     private static final Map<String, String> PDF_CONTENT_TYPES = Map.of(
