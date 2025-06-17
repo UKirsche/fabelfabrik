@@ -43,4 +43,12 @@ public class StoryUploadForm {
     @FormParam("audioFileName")
     @PartType("text/plain")
     public String audioFileName;
+
+    @FormParam("video")
+    @PartType("application/octet-stream")
+    public InputStream video;
+
+    @FormParam("videoFileName")
+    @PartType("text/plain")
+    public String videoFileName;
 }

@@ -46,8 +46,13 @@ public class AdminStoryResource {
             return Response.serverError().entity(audioResult.error).build();
         }
 
+        FileUploadResult videoResult = fileUploadService.processVideoUpload(form.video, form.videoFileName);
+        if (!videoResult.success) {
+            return Response.serverError().entity(videoResult.error).build();
+        }
+
         // Story erstellen und speichern
-        Story story = storyService.of(form, pdfResult, imageResult, audioResult);
+        Story story = storyService.of(form, pdfResult, imageResult, audioResult, videoResult);
 
         LOG.infof("Story created: %s", story);
         return Response.ok(story).build();

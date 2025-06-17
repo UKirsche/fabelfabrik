@@ -53,6 +53,7 @@ public class StoryResource {
             story.content = updatedStory.content;
             story.images = updatedStory.images;
             story.audioUrl = updatedStory.audioUrl;
+            story.videoUrl = updatedStory.videoUrl;
             story.persistOrUpdate();
         }
         return story;

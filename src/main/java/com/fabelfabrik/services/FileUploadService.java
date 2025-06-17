@@ -33,6 +33,11 @@ public class FileUploadService {
                 fileStorageService::storeAudio, "Audio");
     }
 
+    public FileUploadResult processVideoUpload(InputStream fileStream, String fileName) {
+        return processFileUpload(fileStream, fileName,
+                fileStorageService::storeVideo, "Video");
+    }
+
     // Generische Upload-Methode
     private FileUploadResult processFileUpload(InputStream fileStream, String fileName,
                                                FileUploadFunction uploadFunction, String fileType) {

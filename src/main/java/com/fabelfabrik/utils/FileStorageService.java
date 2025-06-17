@@ -26,6 +26,7 @@ public class FileStorageService {
     private static final String IMAGE_DIR = "images";
     private static final String PDF_DIR = "pdfs";
     private static final String AUDIO_DIR = "audio";
+    private static final String VIDEO_DIR = "videos";
 
     @PostConstruct
     public void init() {
@@ -39,6 +40,7 @@ public class FileStorageService {
             Path imagePath = Paths.get(UPLOAD_DIR, IMAGE_DIR);
             Path pdfPath = Paths.get(UPLOAD_DIR, PDF_DIR);
             Path audioPath = Paths.get(UPLOAD_DIR, AUDIO_DIR);
+            Path videoPath = Paths.get(UPLOAD_DIR, VIDEO_DIR);
 
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
@@ -58,6 +60,11 @@ public class FileStorageService {
             if (!Files.exists(audioPath)) {
                 Files.createDirectories(audioPath);
                 LOG.info("Created audio directory: " + audioPath.toAbsolutePath());
+            }
+
+            if (!Files.exists(videoPath)) {
+                Files.createDirectories(videoPath);
+                LOG.info("Created video directory: " + videoPath.toAbsolutePath());
             }
         } catch (IOException e) {
             LOG.error("Failed to create upload directories", e);
@@ -148,5 +155,19 @@ public class FileStorageService {
      */
     public File getAudio(String audioPath) {
         return getFile(audioPath, "Audio");
+    }
+
+    /**
+     * Store a video file
+     */
+    public String storeVideo(InputStream inputStream, String fileName) {
+        return storeFile(inputStream, fileName, VIDEO_DIR, "video");
+    }
+
+    /**
+     * Get a video file
+     */
+    public File getVideo(String videoPath) {
+        return getFile(videoPath, "Video");
     }
 }

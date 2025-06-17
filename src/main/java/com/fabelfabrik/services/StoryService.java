@@ -96,7 +96,8 @@ public class StoryService {
      * Creates and persists a Story object from upload form and results
      */
     public Story of(StoryUploadForm form, FileUploadResult pdfResult,
-                    FileUploadResult imageResult, FileUploadResult audioResult) {
+                    FileUploadResult imageResult, FileUploadResult audioResult,
+                    FileUploadResult videoResult) {
         Story story = new Story();
         story.title = form.title;
         story.content = form.content;
@@ -105,6 +106,7 @@ public class StoryService {
         story.pdfUrl = pdfResult.getUrl();
         story.coverImageUrl = imageResult.getUrl();
         story.audioUrl = audioResult.getUrl();
+        story.videoUrl = videoResult != null ? videoResult.getUrl() : null;
 
         // Generate TTS audio from the story content
         String ttsUrl = generateTtsAudio(form.content);
