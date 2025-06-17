@@ -53,6 +53,7 @@ public class AdminStoryResource {
     private static Story of(StoryUploadForm form, FileUploadResult pdfResult, FileUploadResult imageResult, FileUploadResult audioResult) {
         Story story = new Story();
         story.title = form.title;
+        story.content = form.content;
         story.description = form.description;
         story.pageCount = form.pageCount;
         story.pdfUrl = pdfResult.url;

@@ -12,6 +12,10 @@ public class StoryUploadForm {
     @PartType("text/plain")
     public String description;
 
+    @FormParam("content")
+    @PartType("text/plain")
+    public String content;
+
     @FormParam("pageCount")
     @PartType("text/plain")
     public int pageCount;
