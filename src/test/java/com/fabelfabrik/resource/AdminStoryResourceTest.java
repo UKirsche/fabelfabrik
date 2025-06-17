@@ -43,6 +43,7 @@ public class AdminStoryResourceTest {
         testStory.pdfUrl = "pdfs/test.pdf";
         testStory.coverImageUrl = "images/test.jpg";
         testStory.audioUrl = "audio/test.mp3";
+        testStory.ttsUrl = "audio/test_tts.mp3";
 
         // Setup mock responses
         when(fileUploadService.processPdfUpload(any(InputStream.class), anyString()))
@@ -84,7 +85,8 @@ public class AdminStoryResourceTest {
                 .body("pageCount", is(10))
                 .body("pdfUrl", is("pdfs/test.pdf"))
                 .body("coverImageUrl", is("images/test.jpg"))
-                .body("audioUrl", is("audio/test.mp3"));
+                .body("audioUrl", is("audio/test.mp3"))
+                .body("ttsUrl", is("audio/test_tts.mp3"));
     }
 
     @Test

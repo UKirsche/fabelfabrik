@@ -51,5 +51,6 @@ public class StoryServiceTest {
         assertEquals("pdfs/test.pdf", story.pdfUrl);
         assertEquals("images/test.jpg", story.coverImageUrl);
         assertEquals("audio/test.mp3", story.audioUrl);
+        // Note: We're not asserting the specific value of ttsUrl because it depends on the ElevenLabs API call
     }
 }

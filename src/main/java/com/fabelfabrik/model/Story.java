@@ -17,4 +17,5 @@ public class Story extends PanacheMongoEntity {
     public String coverImageUrl;
     public List<String> images;
     public String audioUrl;
+    public String ttsUrl;
 }
