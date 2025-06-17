@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: fabelfabrik-backend
+    env: docker
+    plan: starter
+    branch: main
+    envVars:
+      - key: QUARKUS_MONGODB_CONNECTION_STRING
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: S3_BUCKET_NAME
+        sync: false
