@@ -1,5 +1,5 @@
 # Build Stage
-FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:23.1-java17 AS build
+FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:23.1.7.0-Final-java21 AS build
 WORKDIR /usr/src/app
 COPY . .
 RUN ./mvnw package -DskipTests
