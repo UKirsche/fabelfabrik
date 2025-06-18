@@ -2,26 +2,27 @@ package com.fabelfabrik.utils;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Alternative;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 /**
  * AWS S3 implementation of the FileStorage interface.
- * This implementation stores files in an AWS S3 bucket.
- * 
- * Note: This is a basic implementation that simulates S3 storage.
- * In a real implementation, you would use the AWS S3 SDK to interact with S3.
+ * This implementation stores files in an AWS S3 bucket using the AWS SDK.
  */
 @ApplicationScoped
 @S3Storage
@@ -30,20 +31,21 @@ public class S3FileStorageService implements FileStorage {
     @Inject
     Logger LOG;
 
-    @ConfigProperty(name = "my.upload.aws.access.key", defaultValue = "test-access-key")
+    @ConfigProperty(name = "my.upload.aws.access.key")
     String awsAccessKey;
 
-    @ConfigProperty(name = "my.upload.aws.secret.key", defaultValue = "test-secret-key")
+    @ConfigProperty(name = "my.upload.aws.secret.key")
     String awsSecretKey;
 
-    @ConfigProperty(name = "my.upload.aws.region", defaultValue = "test-region")
+    @ConfigProperty(name = "my.upload.aws.region")
     String awsRegion;
 
-    @ConfigProperty(name = "my.upload.bucket.name", defaultValue = "test-bucket")
+    @ConfigProperty(name = "my.upload.bucket.name")
     String bucketName;
 
-    // Temporary local directories for simulating S3 storage
-    private static final String TEMP_DIR = "s3-temp";
+    private S3Client s3Client;
+
+    // Directory prefixes for different file types
     private static final String IMAGE_DIR = "images";
     private static final String PDF_DIR = "pdfs";
     private static final String AUDIO_DIR = "audio";
@@ -56,42 +58,19 @@ public class S3FileStorageService implements FileStorage {
         LOG.info("AWS Region: " + awsRegion);
         LOG.info("S3 Bucket: " + bucketName);
 
-        // In a real implementation, you would initialize the S3 client here
-        // For now, we'll create temporary directories to simulate S3 storage
-        createTempDirectories();
-    }
-
-    private void createTempDirectories() {
         try {
-            Path tempPath = Paths.get(TEMP_DIR);
-            Path imagePath = Paths.get(TEMP_DIR, IMAGE_DIR);
-            Path pdfPath = Paths.get(TEMP_DIR, PDF_DIR);
-            Path audioPath = Paths.get(TEMP_DIR, AUDIO_DIR);
-            Path videoPath = Paths.get(TEMP_DIR, VIDEO_DIR);
+            // Initialize the S3 client with credentials
+            this.s3Client = S3Client.builder()
+                    .region(Region.of(awsRegion))
+                    .credentialsProvider(StaticCredentialsProvider.create(
+                            AwsBasicCredentials.create(awsAccessKey, awsSecretKey)
+                    ))
+                    .build();
 
-            if (!Files.exists(tempPath)) {
-                Files.createDirectories(tempPath);
-                LOG.info("Created temp directory: " + tempPath.toAbsolutePath());
-            }
-
-            if (!Files.exists(imagePath)) {
-                Files.createDirectories(imagePath);
-            }
-
-            if (!Files.exists(pdfPath)) {
-                Files.createDirectories(pdfPath);
-            }
-
-            if (!Files.exists(audioPath)) {
-                Files.createDirectories(audioPath);
-            }
-
-            if (!Files.exists(videoPath)) {
-                Files.createDirectories(videoPath);
-            }
-        } catch (IOException e) {
-            LOG.error("Failed to create temp directories", e);
-            throw new RuntimeException("Could not create temp directories", e);
+            LOG.info("S3 client initialized successfully");
+        } catch (Exception e) {
+            LOG.error("Failed to initialize S3 client", e);
+            throw new RuntimeException("Could not initialize S3 client", e);
         }
     }
 
@@ -105,19 +84,38 @@ public class S3FileStorageService implements FileStorage {
             if (fileName.contains(".")) {
                 fileExtension = fileName.substring(fileName.lastIndexOf("."));
             }
-            String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
+            String uniqueFileName = UUID.randomUUID() + fileExtension;
 
-            // In a real implementation, you would upload the file to S3 here
-            // For now, we'll store it in a temporary directory
-            Path targetPath = Paths.get(TEMP_DIR, subDir, uniqueFileName);
-            Files.copy(inputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+            // Create the S3 object key
+            String s3Key = subDir + "/" + uniqueFileName;
 
-            LOG.infof("Stored %s in S3: %s (original: %s)", fileType, uniqueFileName, fileName);
+            // Create a temporary file to upload to S3
+            Path tempFile = Files.createTempFile("s3-upload-", fileExtension);
+            try {
+                // Copy the input stream to the temporary file
+                Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
 
-            // Return the S3 path that can be stored in the database
-            // In a real implementation, this would be the S3 object key
-            return subDir + "/" + uniqueFileName;
-        } catch (IOException e) {
+                // Upload the file to S3
+                PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(s3Key)
+                        .build();
+
+                s3Client.putObject(putObjectRequest, tempFile);
+
+                LOG.infof("Stored %s in S3: %s (original: %s)", fileType, s3Key, fileName);
+
+                // Return the S3 object key for database storage
+                return s3Key;
+            } finally {
+                // Clean up the temporary file
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException e) {
+                    LOG.warn("Failed to delete temporary file: " + tempFile, e);
+                }
+            }
+        } catch (Exception e) {
             LOG.error("Failed to store " + fileType + " in S3", e);
             throw new RuntimeException("Failed to store " + fileType + " in S3", e);
         }
@@ -146,18 +144,30 @@ public class S3FileStorageService implements FileStorage {
     /**
      * Generic method to get a file from S3
      */
-    private File getFile(String filePath, String fileType) {
-        // In a real implementation, you would download the file from S3 here
-        // For now, we'll retrieve it from the temporary directory
-        Path path = Paths.get(TEMP_DIR, filePath);
-        File file = path.toFile();
+    private File getFile(String s3Key, String fileType) {
+        try {
+            // Create a temporary file to download the S3 object
+            String fileExtension = "";
+            if (s3Key.contains(".")) {
+                fileExtension = s3Key.substring(s3Key.lastIndexOf("."));
+            }
+            Path tempFile = Files.createTempFile("s3-download-", fileExtension);
 
-        if (!file.exists() || !file.isFile()) {
-            LOG.warnf("%s not found in S3: %s", fileType, filePath);
+            // Download the file from S3
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .build();
+
+            s3Client.getObject(getObjectRequest, tempFile);
+
+            LOG.infof("Downloaded %s from S3: %s", fileType, s3Key);
+            return tempFile.toFile();
+
+        } catch (Exception e) {
+            LOG.errorf("Failed to get %s from S3: %s", fileType, s3Key, e);
             return null;
         }
-
-        return file;
     }
 
     @Override
