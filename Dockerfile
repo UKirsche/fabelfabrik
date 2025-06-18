@@ -2,6 +2,7 @@
 FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:23.1.7.0-Final-java21 AS build
 WORKDIR /usr/src/app
 COPY . .
+RUN chmod +x mvnw
 RUN ./mvnw package -DskipTests
 
 # Run Stage (JVM Runner)
