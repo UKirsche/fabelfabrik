@@ -30,12 +30,10 @@ public class AdminStoryResourceTest {
     @InjectMock
     StoryService storyService;
 
-    private Story testStory;
-
     @BeforeEach
     public void setup() {
         // Setup test story
-        testStory = new Story();
+        Story testStory = new Story();
         testStory.title = "Test Story";
         testStory.content = "Test Content";
         testStory.description = "Test Description";
