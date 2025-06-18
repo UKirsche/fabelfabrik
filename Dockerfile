@@ -5,7 +5,7 @@ COPY . .
 RUN ./mvnw package -DskipTests
 
 # Run Stage (JVM Runner)
-FROM quay.io/quarkus/quarkus-micro-image:3.2
+FROM quay.io/quarkus/quarkus-micro-image:2.0-2025-06-15
 WORKDIR /work/
 COPY --from=build /usr/src/app/target/quarkus-app/ ./
 
