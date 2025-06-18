@@ -1,7 +1,28 @@
 *
 !mvnw
 !.mvn/**
+!pom.xml
+!src/**
+!render.yaml
 !target/*-runner
 !target/*-runner.jar
 !target/lib/*
 !target/quarkus-app/*
+!uploads/
+!uploads/temp/
+!uploads/audio/
+!uploads/images/
+!uploads/pdfs/
+!uploads/videos/
+
+# Exclude files in uploads directories, but keep the directories themselves
+uploads/**/*
+
+# Explicitly ignore these directories/files
+.git/
+.idea/
+README.md
+docker-compose.yml
+
+# Exclude development-specific configuration files
+src/main/resources/application-dev.properties
