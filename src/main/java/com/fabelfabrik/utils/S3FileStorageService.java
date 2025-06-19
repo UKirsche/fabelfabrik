@@ -179,12 +179,17 @@ public class S3FileStorageService implements FileStorage {
                     .build();
 
             LOG.infof("Attempting to download from S3 with key: %s", s3Key);
-            s3Client.getObject(getObjectRequest, tempFile);
-
-            LOG.infof("Downloaded %s from S3: %s to temp file: %s", fileType, s3Key, tempFile);
-            File result = tempFile.toFile();
-            LOG.infof("Temp file exists: %s, size: %d", result.exists(), result.length());
-            return result;
+            
+            // Get the object as ResponseInputStream instead of downloading to file
+            try (var s3Object = s3Client.getObject(getObjectRequest)) {
+                // Copy the S3 object data to our temporary file
+                Files.copy(s3Object, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                
+                LOG.infof("Downloaded %s from S3: %s to temp file: %s", fileType, s3Key, tempFile);
+                File result = tempFile.toFile();
+                LOG.infof("Temp file exists: %s, size: %d", result.exists(), result.length());
+                return result;
+            }
 
         } catch (Exception e) {
             LOG.errorf(e, "Failed to get %s from S3 with key: '%s'", fileType, s3Key);
