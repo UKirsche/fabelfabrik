@@ -33,7 +33,6 @@ public class LocalFileStorageService implements FileStorage {
     private static final String VIDEO_DIR = "videos";
 
     @PostConstruct
-    @Override
     public void init() {
         // Create upload directories if they don't exist
         createDirectories();

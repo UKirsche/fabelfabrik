@@ -52,7 +52,6 @@ public class S3FileStorageService implements FileStorage {
     private static final String VIDEO_DIR = "videos";
 
     @PostConstruct
-    @Override
     public void init() {
         LOG.info("Initializing S3 file storage service");
         LOG.info("AWS Region: " + awsRegion);

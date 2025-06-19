@@ -11,11 +11,6 @@ import java.io.InputStream;
 public interface FileStorage {
 
     /**
-     * Initialize the storage system
-     */
-    void init();
-
-    /**
      * Store an image file
      * @param inputStream The input stream of the file
      * @param fileName The original file name

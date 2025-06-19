@@ -20,15 +20,32 @@ public abstract class AbstractMediaResource {
     }
 
     protected Response getMediaFile(String filePath, String mediaType) {
-        log.infof("Retrieving %s: %s", mediaType, filePath);
+        // Normalisiere den Pfad - entferne führende Slashes und doppelte Slashes
+        String normalizedPath = normalizePath(filePath);
         
-        File file = getFileFromStorage(filePath);
+        log.infof("Retrieving %s: %s (normalized: %s)", mediaType, filePath, normalizedPath);
+        
+        File file = getFileFromStorage(normalizedPath);
         if (file == null) {
+            log.warnf("File not found for path: %s", normalizedPath);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         
         String contentType = determineContentType(file.getName());
         return Response.ok(file, contentType).build();
+    }
+
+    private String normalizePath(String path) {
+        if (path == null || path.isEmpty()) {
+            return path;
+        }
+        
+        // Entferne führende Slashes
+        String normalized = path.replaceAll("^/+", "");
+        // Ersetze mehrfache Slashes durch einzelne
+        normalized = normalized.replaceAll("/+", "/");
+        
+        return normalized;
     }
 
     protected abstract File getFileFromStorage(String filePath);
