@@ -23,15 +23,26 @@ public abstract class AbstractMediaResource {
         // Normalisiere den Pfad - entferne führende Slashes und doppelte Slashes
         String normalizedPath = normalizePath(filePath);
         
-        log.infof("Retrieving %s: %s (normalized: %s)", mediaType, filePath, normalizedPath);
+        log.infof("=== MEDIA REQUEST DEBUG ===");
+        log.infof("Original path: '%s'", filePath);
+        log.infof("Normalized path: '%s'", normalizedPath);
+        log.infof("Media type: %s", mediaType);
+        log.infof("FileStorageService class: %s", fileStorageService.getClass().getName());
         
         File file = getFileFromStorage(normalizedPath);
+        
+        log.infof("File retrieved: %s", file != null ? file.getAbsolutePath() : "NULL");
+        
         if (file == null) {
-            log.warnf("File not found for path: %s", normalizedPath);
+            log.errorf("File not found for path: '%s' (normalized: '%s')", filePath, normalizedPath);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         
+        log.infof("File exists: %s, Size: %d bytes", file.exists(), file.length());
+        
         String contentType = determineContentType(file.getName());
+        log.infof("Content type: %s", contentType);
+        
         return Response.ok(file, contentType).build();
     }
 
