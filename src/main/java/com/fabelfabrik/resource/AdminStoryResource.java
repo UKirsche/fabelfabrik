@@ -26,6 +26,12 @@ public class AdminStoryResource {
     @Inject
     StoryService storyService;
 
+    @GET
+    @Path("/auth")
+    public Response checkAuth() {
+        return Response.ok().build();
+    }
+
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response uploadStory(@MultipartForm StoryUploadForm form) {
