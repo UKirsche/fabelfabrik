@@ -89,9 +89,6 @@ public class StoryService {
         }
     }
 
-
-
-
     /**
      * Creates and persists a Story object from upload form and results
      */
