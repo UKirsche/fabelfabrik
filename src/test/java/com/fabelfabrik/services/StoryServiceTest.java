@@ -22,6 +22,7 @@ public class StoryServiceTest {
     private FileUploadResult imageResult;
     private FileUploadResult audioResult;
     private FileUploadResult videoResult;
+    private FileUploadResult ttsAudioResult;
 
     @BeforeEach
     public void setup() {
@@ -37,12 +38,13 @@ public class StoryServiceTest {
         imageResult = FileUploadResult.success("images/test.jpg");
         audioResult = FileUploadResult.success("audio/test.mp3");
         videoResult = FileUploadResult.success("videos/test.mp4");
+        ttsAudioResult = FileUploadResult.success("audio/tts_test.mp3");
     }
 
     @Test
     public void testStoryCreation() {
         // When
-        Story story = storyService.of(form, pdfResult, imageResult, audioResult, videoResult);
+        Story story = storyService.of(form, pdfResult, imageResult, audioResult, videoResult, ttsAudioResult);
 
         // Then
         assertNotNull(story);
@@ -68,7 +70,7 @@ public class StoryServiceTest {
         form.content = largeContent.toString();
 
         // When
-        Story story = storyService.of(form, pdfResult, imageResult, audioResult, videoResult);
+        Story story = storyService.of(form, pdfResult, imageResult, audioResult, videoResult, ttsAudioResult);
 
         // Then
         assertNotNull(story);

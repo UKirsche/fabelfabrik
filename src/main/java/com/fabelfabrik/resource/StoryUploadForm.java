@@ -51,4 +51,12 @@ public class StoryUploadForm {
     @FormParam("videoFileName")
     @PartType("text/plain")
     public String videoFileName;
+
+    @FormParam("ttsAudio")
+    @PartType("application/octet-stream")
+    public InputStream ttsAudio;
+
+    @FormParam("ttsFileName")
+    @PartType("text/plain")
+    public String ttsFileName;
 }

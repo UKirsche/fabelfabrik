@@ -57,8 +57,12 @@ public class AdminStoryResourceTest {
         when(fileUploadService.processVideoUpload(any(InputStream.class), anyString()))
                 .thenReturn(FileUploadResult.success("videos/test.mp4"));
 
+        when(fileUploadService.processAudioUpload(any(InputStream.class), anyString()))
+                .thenReturn(FileUploadResult.success("audio/test_tts.mp3"));
+
         when(storyService.of(any(StoryUploadForm.class), any(FileUploadResult.class),
-                any(FileUploadResult.class), any(FileUploadResult.class), any(FileUploadResult.class)))
+                any(FileUploadResult.class), any(FileUploadResult.class), any(FileUploadResult.class),
+                any(FileUploadResult.class)))
                 .thenReturn(testStory);
     }
 
@@ -78,6 +82,8 @@ public class AdminStoryResourceTest {
                 .multiPart("audioFileName", "test.mp3")
                 .multiPart("video", new File("src/test/resources/test.mp4"), "video/mp4")
                 .multiPart("videoFileName", "test.mp4")
+                .multiPart("ttsAudio", new File("src/test/resources/test.mp3"), "audio/mpeg")
+                .multiPart("ttsFileName", "test_tts.mp3")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .when()
                 .post("/api/admin/story")
@@ -114,6 +120,8 @@ public class AdminStoryResourceTest {
                 .multiPart("audioFileName", "test.mp3")
                 .multiPart("video", new File("src/test/resources/test.mp4"), "video/mp4")
                 .multiPart("videoFileName", "test.mp4")
+                .multiPart("ttsAudio", new File("src/test/resources/test.mp3"), "audio/mpeg")
+                .multiPart("ttsFileName", "test_tts.mp3")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .when()
                 .post("/api/admin/story")

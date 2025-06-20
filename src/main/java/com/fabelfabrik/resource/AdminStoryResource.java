@@ -57,8 +57,13 @@ public class AdminStoryResource {
             return Response.serverError().entity(videoResult.error).build();
         }
 
+        FileUploadResult ttsAudioResult = fileUploadService.processAudioUpload(form.ttsAudio, form.ttsFileName);
+        if (!ttsAudioResult.success) {
+            return Response.serverError().entity(ttsAudioResult.error).build();
+        }
+
         // Story erstellen und speichern
-        Story story = storyService.of(form, pdfResult, imageResult, audioResult, videoResult);
+        Story story = storyService.of(form, pdfResult, imageResult, audioResult, videoResult, ttsAudioResult);
 
         LOG.infof("Story created: %s", story);
         return Response.ok(story).build();

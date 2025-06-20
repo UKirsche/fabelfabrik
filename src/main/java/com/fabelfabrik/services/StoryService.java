@@ -97,7 +97,7 @@ public class StoryService {
      */
     public Story of(StoryUploadForm form, FileUploadResult pdfResult,
                     FileUploadResult imageResult, FileUploadResult audioResult,
-                    FileUploadResult videoResult) {
+                    FileUploadResult videoResult, FileUploadResult ttsAudioResult) {
         Story story = new Story();
         story.title = form.title;
         story.content = form.content;
@@ -108,13 +108,19 @@ public class StoryService {
         story.audioUrl = audioResult.getUrl();
         story.videoUrl = videoResult != null ? videoResult.getUrl() : null;
 
-        // Generate TTS audio from the story content
-        String ttsUrl = generateTtsAudio(form.content);
-        if (ttsUrl != null) {
-            story.ttsUrl = ttsUrl;
-            LOG.info("Set ttsUrl for story: " + ttsUrl);
+        // Set ttsUrl from uploaded file if available
+        if (ttsAudioResult != null && ttsAudioResult.getUrl() != null) {
+            story.ttsUrl = ttsAudioResult.getUrl();
+            LOG.info("Set ttsUrl from uploaded file: " + ttsAudioResult.getUrl());
         } else {
-            LOG.warn("Failed to generate TTS audio for story");
+            // Generate TTS audio from the story content only if ttsUrl is not already set
+            String ttsUrl = generateTtsAudio(form.content);
+            if (ttsUrl != null) {
+                story.ttsUrl = ttsUrl;
+                LOG.info("Set ttsUrl for story: " + ttsUrl);
+            } else {
+                LOG.warn("Failed to generate TTS audio for story");
+            }
         }
 
         story.persist();
