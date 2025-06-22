@@ -10,7 +10,6 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 
 @Path("/api/admin/story")
 @RolesAllowed("admin")
@@ -34,7 +33,7 @@ public class AdminStoryResource {
 
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadStory(@MultipartForm StoryUploadForm form) {
+    public Response uploadStory(StoryUploadForm form) {
 
         // Alle Uploads verarbeiten
         FileUploadResult pdfResult = fileUploadService.processPdfUpload(form.pdf, form.pdfFileName);

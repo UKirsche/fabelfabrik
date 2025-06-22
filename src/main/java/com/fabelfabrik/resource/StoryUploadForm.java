@@ -1,62 +1,35 @@
 package com.fabelfabrik.resource;
-import org.jboss.resteasy.annotations.providers.multipart.PartType;
-import jakarta.ws.rs.FormParam;
+import org.jboss.resteasy.reactive.RestForm;
 import java.io.InputStream;
 
 public class StoryUploadForm {
-    @FormParam("title")
-    @PartType("text/plain")
+    @RestForm
     public String title;
 
-    @FormParam("description")
-    @PartType("text/plain")
+    @RestForm
     public String description;
-
-    @FormParam("content")
-    @PartType("text/plain")
+    @RestForm
     public String content;
-
-    @FormParam("pageCount")
-    @PartType("text/plain")
+    @RestForm
     public int pageCount;
-
-    @FormParam("pdf")
-    @PartType("application/pdf")
+    @RestForm
     public InputStream pdf;
-
-    @FormParam("pdfFileName")
-    @PartType("text/plain")
+    @RestForm
     public String pdfFileName;
-
-    @FormParam("coverImage")
-    @PartType("application/octet-stream")
+    @RestForm
     public InputStream coverImage;
-
-    @FormParam("coverImageFileName")
-    @PartType("text/plain")
+    @RestForm
     public String coverImageFileName;
-
-    @FormParam("audio")
-    @PartType("application/octet-stream")
+    @RestForm
     public InputStream audio;
-
-    @FormParam("audioFileName")
-    @PartType("text/plain")
+    @RestForm
     public String audioFileName;
-
-    @FormParam("video")
-    @PartType("application/octet-stream")
+    @RestForm
     public InputStream video;
-
-    @FormParam("videoFileName")
-    @PartType("text/plain")
+    @RestForm
     public String videoFileName;
-
-    @FormParam("ttsAudio")
-    @PartType("application/octet-stream")
+    @RestForm
     public InputStream ttsAudio;
-
-    @FormParam("ttsFileName")
-    @PartType("text/plain")
+    @RestForm
     public String ttsFileName;
 }
