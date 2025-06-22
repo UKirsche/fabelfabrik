@@ -3,6 +3,7 @@ package com.fabelfabrik.resource;
 import com.fabelfabrik.model.Story;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.bson.types.ObjectId;
 import org.jboss.logging.Logger;
 
@@ -85,4 +86,28 @@ public class StoryResource {
         }
         return story;
     }
+
+    @POST
+    @Path("/{id}/ratings")
+    public Response addRating(@PathParam("id") String id, RatingRequest ratingRequest) {
+        LOG.infof("Adding rating %d to story with id %s", ratingRequest.rating, id);
+
+        // Validate rating value (must be between 1 and 5)
+        if (ratingRequest.rating < 1 || ratingRequest.rating > 5) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Rating must be between 1 and 5")
+                    .build();
+        }
+
+        Story story = Story.findById(new ObjectId(id));
+        if (story == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Story not found")
+                    .build();
+        }
+        story.addRating(ratingRequest);
+        story.persistOrUpdate();
+        return Response.ok(story).build();
+    }
+
 }
