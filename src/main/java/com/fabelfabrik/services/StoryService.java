@@ -4,6 +4,7 @@ import com.fabelfabrik.model.FileUploadResult;
 import com.fabelfabrik.model.Story;
 import com.fabelfabrik.resource.StoryUploadForm;
 import com.fabelfabrik.utils.FileStorageService;
+import java.time.Instant;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.Client;
@@ -104,6 +105,7 @@ public class StoryService {
         story.coverImageUrl = imageResult.getUrl();
         story.audioUrl = audioResult.getUrl();
         story.videoUrl = videoResult != null ? videoResult.getUrl() : null;
+        story.createdAt = Instant.now();
 
         // Set ttsUrl from uploaded file if available
         if (ttsAudioResult != null && ttsAudioResult.getUrl() != null) {

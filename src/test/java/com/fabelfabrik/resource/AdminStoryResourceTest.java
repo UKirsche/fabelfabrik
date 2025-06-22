@@ -4,6 +4,7 @@ import com.fabelfabrik.model.FileUploadResult;
 import com.fabelfabrik.model.Story;
 import com.fabelfabrik.services.FileUploadService;
 import com.fabelfabrik.services.StoryService;
+import java.time.Instant;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.security.TestSecurity;
@@ -43,6 +44,7 @@ public class AdminStoryResourceTest {
         testStory.audioUrl = "audio/test.mp3";
         testStory.ttsUrl = "audio/test_tts.mp3";
         testStory.videoUrl = "videos/test.mp4";
+        testStory.createdAt = Instant.now();
 
         // Setup mock responses
         when(fileUploadService.processPdfUpload(any(InputStream.class), anyString()))

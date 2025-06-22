@@ -7,8 +7,10 @@ import jakarta.ws.rs.core.Response;
 import org.bson.types.ObjectId;
 import org.jboss.logging.Logger;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
 @Path("/api/stories")
 @Produces(MediaType.APPLICATION_JSON)
@@ -20,6 +22,8 @@ public class StoryResource {
     @GET
     public List<Story> getAll() {
         List<Story> stories = Story.listAll();
+        // Sort stories by createdAt in descending order (newest first)
+        stories.sort(Comparator.comparing(story -> story.createdAt, Comparator.nullsLast(Comparator.reverseOrder())));
         LOG.infof("Found %d stories", stories.size());
         return stories;
     }
@@ -27,6 +31,10 @@ public class StoryResource {
     @POST
     public Story create(Story story) {
         LOG.infof("Creating story: %s", story);
+        // Set createdAt if not already set
+        if (story.createdAt == null) {
+            story.createdAt = Instant.now();
+        }
         story.persist();
         return story;
     }
