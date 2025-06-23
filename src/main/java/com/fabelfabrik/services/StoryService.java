@@ -125,4 +125,84 @@ public class StoryService {
         story.persist();
         return story;
     }
+
+    /**
+     * Deletes a story and all its associated files
+     * @param storyId The ID of the story to delete
+     * @return true if the story was deleted successfully, false otherwise
+     */
+    public boolean deleteStory(String storyId) {
+        LOG.infof("Deleting story with ID: %s", storyId);
+
+        // Find the story by ID
+        Story story = Story.findById(storyId);
+        if (story == null) {
+            LOG.warnf("Story not found with ID: %s", storyId);
+            return false;
+        }
+
+        // Delete all associated files
+        boolean filesDeleted = true;
+
+        // Delete PDF file
+        if (story.pdfUrl != null && !story.pdfUrl.isEmpty()) {
+            boolean pdfDeleted = fileStorageService.deletePdf(story.pdfUrl);
+            if (!pdfDeleted) {
+                LOG.warnf("Failed to delete PDF file: %s", story.pdfUrl);
+                filesDeleted = false;
+            }
+        }
+
+        // Delete cover image
+        if (story.coverImageUrl != null && !story.coverImageUrl.isEmpty()) {
+            boolean imageDeleted = fileStorageService.deleteImage(story.coverImageUrl);
+            if (!imageDeleted) {
+                LOG.warnf("Failed to delete cover image: %s", story.coverImageUrl);
+                filesDeleted = false;
+            }
+        }
+
+        // Delete audio file
+        if (story.audioUrl != null && !story.audioUrl.isEmpty()) {
+            boolean audioDeleted = fileStorageService.deleteAudio(story.audioUrl);
+            if (!audioDeleted) {
+                LOG.warnf("Failed to delete audio file: %s", story.audioUrl);
+                filesDeleted = false;
+            }
+        }
+
+        // Delete TTS audio file
+        if (story.ttsUrl != null && !story.ttsUrl.isEmpty()) {
+            boolean ttsDeleted = fileStorageService.deleteAudio(story.ttsUrl);
+            if (!ttsDeleted) {
+                LOG.warnf("Failed to delete TTS audio file: %s", story.ttsUrl);
+                filesDeleted = false;
+            }
+        }
+
+        // Delete video file
+        if (story.videoUrl != null && !story.videoUrl.isEmpty()) {
+            boolean videoDeleted = fileStorageService.deleteVideo(story.videoUrl);
+            if (!videoDeleted) {
+                LOG.warnf("Failed to delete video file: %s", story.videoUrl);
+                filesDeleted = false;
+            }
+        }
+
+        // Delete the story entity from the database
+        try {
+            story.delete();
+            // Check if the story was actually deleted
+            if (Story.findById(storyId) != null) {
+                LOG.warnf("Failed to delete story entity with ID: %s", storyId);
+                return false;
+            }
+        } catch (Exception e) {
+            LOG.errorf(e, "Error deleting story entity with ID: %s", storyId);
+            return false;
+        }
+
+        LOG.infof("Story deleted successfully: %s, all files deleted: %s", storyId, filesDeleted);
+        return true;
+    }
 }

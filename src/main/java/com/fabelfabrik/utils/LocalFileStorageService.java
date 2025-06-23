@@ -182,4 +182,57 @@ public class LocalFileStorageService implements FileStorage {
     public File getVideo(String videoPath) {
         return getFile(videoPath, "Video");
     }
+
+    /**
+     * Generic method to delete a file from a specific path
+     */
+    private boolean deleteFile(String filePath, String fileType) {
+        Path path = Paths.get(UPLOAD_DIR, filePath);
+        File file = path.toFile();
+
+        if (!file.exists() || !file.isFile()) {
+            LOG.warnf("%s not found for deletion: %s", fileType, filePath);
+            return false;
+        }
+
+        boolean deleted = file.delete();
+        if (deleted) {
+            LOG.infof("Deleted %s: %s", fileType, filePath);
+        } else {
+            LOG.warnf("Failed to delete %s: %s", fileType, filePath);
+        }
+        return deleted;
+    }
+
+    /**
+     * Delete an image file
+     */
+    @Override
+    public boolean deleteImage(String imagePath) {
+        return deleteFile(imagePath, "Image");
+    }
+
+    /**
+     * Delete a PDF file
+     */
+    @Override
+    public boolean deletePdf(String pdfPath) {
+        return deleteFile(pdfPath, "PDF");
+    }
+
+    /**
+     * Delete an audio file
+     */
+    @Override
+    public boolean deleteAudio(String audioPath) {
+        return deleteFile(audioPath, "Audio");
+    }
+
+    /**
+     * Delete a video file
+     */
+    @Override
+    public boolean deleteVideo(String videoPath) {
+        return deleteFile(videoPath, "Video");
+    }
 }

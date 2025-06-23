@@ -69,4 +69,32 @@ public interface FileStorage {
      * @return The file object or null if not found
      */
     File getVideo(String videoPath);
+
+    /**
+     * Delete an image file
+     * @param imagePath The relative path or identifier of the file
+     * @return true if the file was deleted successfully, false otherwise
+     */
+    boolean deleteImage(String imagePath);
+
+    /**
+     * Delete a PDF file
+     * @param pdfPath The relative path or identifier of the file
+     * @return true if the file was deleted successfully, false otherwise
+     */
+    boolean deletePdf(String pdfPath);
+
+    /**
+     * Delete an audio file
+     * @param audioPath The relative path or identifier of the file
+     * @return true if the file was deleted successfully, false otherwise
+     */
+    boolean deleteAudio(String audioPath);
+
+    /**
+     * Delete a video file
+     * @param videoPath The relative path or identifier of the file
+     * @return true if the file was deleted successfully, false otherwise
+     */
+    boolean deleteVideo(String videoPath);
 }

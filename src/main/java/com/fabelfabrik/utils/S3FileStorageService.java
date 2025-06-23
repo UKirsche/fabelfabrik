@@ -82,7 +82,7 @@ public class S3FileStorageService implements FileStorage {
         LOG.infof("Sub directory: '%s'", subDir);
         LOG.infof("File type: %s", fileType);
         LOG.infof("Bucket: %s", bucketName);
-        
+
         try {
             // Generate a unique filename to prevent collisions
             String fileExtension = "";
@@ -93,14 +93,14 @@ public class S3FileStorageService implements FileStorage {
 
             // Create the S3 object key
             String s3Key = subDir + "/" + uniqueFileName;
-            
+
             LOG.infof("Generated unique filename: '%s'", uniqueFileName);
             LOG.infof("Generated S3 key: '%s'", s3Key);
 
             // Create a temporary file to upload to S3
             Path tempFile = Files.createTempFile("s3-upload-", fileExtension);
             LOG.infof("Created temp file: %s", tempFile);
-            
+
             try {
                 // Copy the input stream to the temporary file
                 Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
@@ -163,7 +163,7 @@ public class S3FileStorageService implements FileStorage {
         LOG.infof("Requested S3 key: '%s'", s3Key);
         LOG.infof("File type: %s", fileType);
         LOG.infof("Bucket: %s", bucketName);
-        
+
         try {
             // Create a temporary file to download the S3 object
             String fileExtension = "";
@@ -179,12 +179,12 @@ public class S3FileStorageService implements FileStorage {
                     .build();
 
             LOG.infof("Attempting to download from S3 with key: %s", s3Key);
-            
+
             // Get the object as ResponseInputStream instead of downloading to file
             try (var s3Object = s3Client.getObject(getObjectRequest)) {
                 // Copy the S3 object data to our temporary file
                 Files.copy(s3Object, tempFile, StandardCopyOption.REPLACE_EXISTING);
-                
+
                 LOG.infof("Downloaded %s from S3: %s to temp file: %s", fileType, s3Key, tempFile);
                 File result = tempFile.toFile();
                 LOG.infof("Temp file exists: %s, size: %d", result.exists(), result.length());
@@ -219,5 +219,53 @@ public class S3FileStorageService implements FileStorage {
     @Override
     public File getVideo(String videoPath) {
         return getFile(videoPath, "Video");
+    }
+
+    /**
+     * Generic method to delete a file from S3
+     */
+    private boolean deleteFile(String s3Key, String fileType) {
+        LOG.infof("=== S3 DELETE DEBUG ===");
+        LOG.infof("Deleting S3 key: '%s'", s3Key);
+        LOG.infof("File type: %s", fileType);
+        LOG.infof("Bucket: %s", bucketName);
+
+        try {
+            // Delete the object from S3
+            s3Client.deleteObject(builder -> builder
+                .bucket(bucketName)
+                .key(s3Key)
+                .build());
+
+            LOG.infof("Successfully deleted %s from S3: '%s'", fileType, s3Key);
+            return true;
+        } catch (Exception e) {
+            LOG.errorf(e, "Failed to delete %s from S3 with key: '%s'", fileType, s3Key);
+            LOG.errorf("Error details: %s", e.getMessage());
+            if (e.getCause() != null) {
+                LOG.errorf("Cause: %s", e.getCause().getMessage());
+            }
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteImage(String imagePath) {
+        return deleteFile(imagePath, "Image");
+    }
+
+    @Override
+    public boolean deletePdf(String pdfPath) {
+        return deleteFile(pdfPath, "PDF");
+    }
+
+    @Override
+    public boolean deleteAudio(String audioPath) {
+        return deleteFile(audioPath, "Audio");
+    }
+
+    @Override
+    public boolean deleteVideo(String videoPath) {
+        return deleteFile(videoPath, "Video");
     }
 }

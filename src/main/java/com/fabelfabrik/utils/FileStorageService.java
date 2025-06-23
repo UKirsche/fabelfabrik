@@ -76,4 +76,32 @@ public class FileStorageService {
     public File getVideo(String videoPath) {
         return fileStorage.getVideo(videoPath);
     }
+
+    /**
+     * Delete an image file
+     */
+    public boolean deleteImage(String imagePath) {
+        return fileStorage.deleteImage(imagePath);
+    }
+
+    /**
+     * Delete a PDF file
+     */
+    public boolean deletePdf(String pdfPath) {
+        return fileStorage.deletePdf(pdfPath);
+    }
+
+    /**
+     * Delete an audio file
+     */
+    public boolean deleteAudio(String audioPath) {
+        return fileStorage.deleteAudio(audioPath);
+    }
+
+    /**
+     * Delete a video file
+     */
+    public boolean deleteVideo(String videoPath) {
+        return fileStorage.deleteVideo(videoPath);
+    }
 }

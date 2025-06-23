@@ -67,4 +67,34 @@ public class AdminStoryResource {
         LOG.infof("Story created: %s", story);
         return Response.ok(story).build();
     }
+
+    /**
+     * Deletes a story and all its associated files
+     * @param id The ID of the story to delete
+     * @return 200 OK if the story was deleted successfully, 404 Not Found if the story was not found,
+     *         500 Internal Server Error if there was an error deleting the story
+     */
+    @DELETE
+    @Path("/{id}")
+    public Response deleteStory(@PathParam("id") String id) {
+        LOG.infof("Received request to delete story with ID: %s", id);
+
+        boolean deleted = storyService.deleteStory(id);
+
+        if (deleted) {
+            return Response.ok().build();
+        } else {
+            // Check if the story exists
+            Story story = Story.findById(id);
+            if (story == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("Story not found with ID: " + id)
+                        .build();
+            } else {
+                return Response.serverError()
+                        .entity("Failed to delete story with ID: " + id)
+                        .build();
+            }
+        }
+    }
 }
