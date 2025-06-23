@@ -4,6 +4,7 @@ import com.fabelfabrik.model.FileUploadResult;
 import com.fabelfabrik.model.Story;
 import com.fabelfabrik.services.FileUploadService;
 import com.fabelfabrik.services.StoryService;
+import org.bson.types.ObjectId;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -85,7 +86,7 @@ public class AdminStoryResource {
             return Response.ok().build();
         } else {
             // Check if the story exists
-            Story story = Story.findById(id);
+            Story story = Story.findById(new ObjectId(id));
             if (story == null) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("Story not found with ID: " + id)

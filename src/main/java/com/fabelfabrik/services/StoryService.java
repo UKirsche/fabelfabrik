@@ -4,6 +4,7 @@ import com.fabelfabrik.model.FileUploadResult;
 import com.fabelfabrik.model.Story;
 import com.fabelfabrik.resource.StoryUploadForm;
 import com.fabelfabrik.utils.FileStorageService;
+import org.bson.types.ObjectId;
 import java.time.Instant;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -135,7 +136,7 @@ public class StoryService {
         LOG.infof("Deleting story with ID: %s", storyId);
 
         // Find the story by ID
-        Story story = Story.findById(storyId);
+        Story story = Story.findById(new ObjectId(storyId));
         if (story == null) {
             LOG.warnf("Story not found with ID: %s", storyId);
             return false;
@@ -193,7 +194,7 @@ public class StoryService {
         try {
             story.delete();
             // Check if the story was actually deleted
-            if (Story.findById(storyId) != null) {
+            if (Story.findById(new ObjectId(storyId)) != null) {
                 LOG.warnf("Failed to delete story entity with ID: %s", storyId);
                 return false;
             }
