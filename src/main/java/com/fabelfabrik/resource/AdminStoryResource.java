@@ -11,6 +11,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import java.util.List;
 
 @Path("/api/admin/story")
 @RolesAllowed("admin")
@@ -47,6 +48,18 @@ public class AdminStoryResource {
             return Response.serverError().entity(imageResult.error).build();
         }
 
+        // Verarbeite mehrere Bilder, wenn vorhanden
+        List<FileUploadResult> imagesResults = null;
+        if (form.images != null && form.imageFileNames != null && !form.images.isEmpty() && !form.imageFileNames.isEmpty()) {
+            imagesResults = fileUploadService.processMultipleImagesUpload(form.images, form.imageFileNames);
+            // Prüfe, ob alle Uploads erfolgreich waren
+            for (FileUploadResult result : imagesResults) {
+                if (!result.success) {
+                    return Response.serverError().entity(result.error).build();
+                }
+            }
+        }
+
         FileUploadResult audioResult = fileUploadService.processAudioUpload(form.audio, form.audioFileName);
         if (!audioResult.success) {
             return Response.serverError().entity(audioResult.error).build();
@@ -63,7 +76,7 @@ public class AdminStoryResource {
         }
 
         // Story erstellen und speichern
-        Story story = storyService.of(form, pdfResult, imageResult, audioResult, videoResult, ttsAudioResult);
+        Story story = storyService.of(form, pdfResult, imageResult, imagesResults, audioResult, videoResult, ttsAudioResult);
 
         LOG.infof("Story created: %s", story);
         return Response.ok(story).build();

@@ -18,7 +18,9 @@ import org.jboss.logging.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @ApplicationScoped
@@ -97,6 +99,16 @@ public class StoryService {
     public Story of(StoryUploadForm form, FileUploadResult pdfResult,
                     FileUploadResult imageResult, FileUploadResult audioResult,
                     FileUploadResult videoResult, FileUploadResult ttsAudioResult) {
+        return of(form, pdfResult, imageResult, null, audioResult, videoResult, ttsAudioResult);
+    }
+
+    /**
+     * Creates and persists a Story object from upload form and results including multiple images
+     */
+    public Story of(StoryUploadForm form, FileUploadResult pdfResult,
+                    FileUploadResult imageResult, List<FileUploadResult> imagesResults,
+                    FileUploadResult audioResult, FileUploadResult videoResult, 
+                    FileUploadResult ttsAudioResult) {
         Story story = new Story();
         story.title = form.title;
         story.content = form.content;
@@ -107,6 +119,16 @@ public class StoryService {
         story.audioUrl = audioResult.getUrl();
         story.videoUrl = videoResult != null ? videoResult.getUrl() : null;
         story.createdAt = Instant.now();
+
+        // Process multiple images if available
+        if (imagesResults != null && !imagesResults.isEmpty()) {
+            story.images = new ArrayList<>();
+            for (FileUploadResult result : imagesResults) {
+                if (result.success && result.getUrl() != null) {
+                    story.images.add(result.getUrl());
+                }
+            }
+        }
 
         // Set ttsUrl from uploaded file if available
         if (ttsAudioResult != null && ttsAudioResult.getUrl() != null) {
@@ -160,6 +182,19 @@ public class StoryService {
             if (!imageDeleted) {
                 LOG.warnf("Failed to delete cover image: %s", story.coverImageUrl);
                 filesDeleted = false;
+            }
+        }
+
+        // Delete additional images
+        if (story.images != null && !story.images.isEmpty()) {
+            for (String imageUrl : story.images) {
+                if (imageUrl != null && !imageUrl.isEmpty()) {
+                    boolean imageDeleted = fileStorageService.deleteImage(imageUrl);
+                    if (!imageDeleted) {
+                        LOG.warnf("Failed to delete additional image: %s", imageUrl);
+                        filesDeleted = false;
+                    }
+                }
             }
         }
 

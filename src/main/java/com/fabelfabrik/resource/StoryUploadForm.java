@@ -1,6 +1,7 @@
 package com.fabelfabrik.resource;
 import org.jboss.resteasy.reactive.RestForm;
 import java.io.InputStream;
+import java.util.List;
 
 public class StoryUploadForm {
     @RestForm
@@ -20,6 +21,10 @@ public class StoryUploadForm {
     public InputStream coverImage;
     @RestForm
     public String coverImageFileName;
+    @RestForm
+    public List<InputStream> images;
+    @RestForm
+    public List<String> imageFileNames;
     @RestForm
     public InputStream audio;
     @RestForm

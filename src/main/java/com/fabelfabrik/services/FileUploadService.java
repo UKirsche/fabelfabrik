@@ -7,6 +7,8 @@ import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 @ApplicationScoped
 public class FileUploadService {
@@ -36,6 +38,29 @@ public class FileUploadService {
     public FileUploadResult processVideoUpload(InputStream fileStream, String fileName) {
         return processFileUpload(fileStream, fileName,
                 fileStorageService::storeVideo, "Video");
+    }
+
+    // Methode für mehrere Bilder
+    public List<FileUploadResult> processMultipleImagesUpload(List<InputStream> fileStreams, List<String> fileNames) {
+        List<FileUploadResult> results = new ArrayList<>();
+
+        if (fileStreams == null || fileNames == null || fileStreams.isEmpty() || fileNames.isEmpty()) {
+            return results;
+        }
+
+        // Ensure both lists have the same size
+        int size = Math.min(fileStreams.size(), fileNames.size());
+
+        for (int i = 0; i < size; i++) {
+            InputStream fileStream = fileStreams.get(i);
+            String fileName = fileNames.get(i);
+
+            FileUploadResult result = processFileUpload(fileStream, fileName,
+                    fileStorageService::storeImage, "Bild");
+            results.add(result);
+        }
+
+        return results;
     }
 
     // Generische Upload-Methode
