@@ -51,13 +51,32 @@ public class AdminStoryResource {
         // Verarbeite mehrere Bilder, wenn vorhanden
         List<FileUploadResult> imagesResults = null;
         if (form.images != null && form.imageFileNames != null && !form.images.isEmpty() && !form.imageFileNames.isEmpty()) {
+            LOG.infof("Verarbeite %d zusätzliche Bilder für Story-Upload", form.images.size());
+            
             imagesResults = fileUploadService.processMultipleImagesUpload(form.images, form.imageFileNames);
+            
             // Prüfe, ob alle Uploads erfolgreich waren
-            for (FileUploadResult result : imagesResults) {
+            int successCount = 0;
+            for (int i = 0; i < imagesResults.size(); i++) {
+                FileUploadResult result = imagesResults.get(i);
                 if (!result.success) {
+                    LOG.errorf("Fehler beim Upload von Bild %d (%s): %s", 
+                      i + 1, 
+                      form.imageFileNames.get(i), 
+                      result.error);
                     return Response.serverError().entity(result.error).build();
+                } else {
+                    successCount++;
+                    LOG.infof("Bild %d erfolgreich hochgeladen: %s -> %s", 
+                     i + 1, 
+                     form.imageFileNames.get(i), 
+                     result.url);
                 }
             }
+            
+            LOG.infof("Alle %d zusätzlichen Bilder erfolgreich hochgeladen", successCount);
+        } else {
+            LOG.debug("Keine zusätzlichen Bilder zum Upload gefunden");
         }
 
         FileUploadResult audioResult = fileUploadService.processAudioUpload(form.audio, form.audioFileName);
