@@ -45,30 +45,30 @@ public interface FileStorage {
     /**
      * Get an image file
      * @param imagePath The relative path or identifier of the file
-     * @return The file object or null if not found
+     * @return The input stream of the file or null if not found
      */
-    File getImage(String imagePath);
+    InputStream getImage(String imagePath);
 
     /**
      * Get a PDF file
      * @param pdfPath The relative path or identifier of the file
-     * @return The file object or null if not found
+     * @return The input stream of the file or null if not found
      */
-    File getPdf(String pdfPath);
+    InputStream getPdf(String pdfPath);
 
     /**
      * Get an audio file
      * @param audioPath The relative path or identifier of the file
-     * @return The file object or null if not found
+     * @return The input stream of the file or null if not found
      */
-    File getAudio(String audioPath);
+    InputStream getAudio(String audioPath);
 
     /**
      * Get a video file
      * @param videoPath The relative path or identifier of the file
-     * @return The file object or null if not found
+     * @return The input stream of the file or null if not found
      */
-    File getVideo(String videoPath);
+    InputStream getVideo(String videoPath);
 
     /**
      * Delete an image file

@@ -3,7 +3,7 @@ package com.fabelfabrik.resource;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 
-import java.io.File;
+import java.io.InputStream;
 import java.util.Map;
 
 @Path("/api/audio")
@@ -23,7 +23,7 @@ public class AudioResource extends AbstractMediaResource {
     }
 
     @Override
-    protected File getFileFromStorage(String filePath) {
+    protected InputStream getFileFromStorage(String filePath) {
         return fileStorageService.getAudio(filePath);
     }
 

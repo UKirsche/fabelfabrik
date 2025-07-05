@@ -50,30 +50,30 @@ public class FileStorageService {
     }
 
     /**
-     * Get an image file
+     * Get an image file as an InputStream
      */
-    public File getImage(String imagePath) {
+    public InputStream getImage(String imagePath) {
         return fileStorage.getImage(imagePath);
     }
 
     /**
-     * Get a PDF file
+     * Get a PDF file as an InputStream
      */
-    public File getPdf(String pdfPath) {
+    public InputStream getPdf(String pdfPath) {
         return fileStorage.getPdf(pdfPath);
     }
 
     /**
-     * Get an audio file
+     * Get an audio file as an InputStream
      */
-    public File getAudio(String audioPath) {
+    public InputStream getAudio(String audioPath) {
         return fileStorage.getAudio(audioPath);
     }
 
     /**
-     * Get a video file
+     * Get a video file as an InputStream
      */
-    public File getVideo(String videoPath) {
+    public InputStream getVideo(String videoPath) {
         return fileStorage.getVideo(videoPath);
     }
 
