@@ -156,16 +156,23 @@ public class S3FileStorageService implements FileStorage {
     }
 
     /**
-     * Generic method to get a file from S3 as an InputStream
+     * Generic method to get a file from S3
      */
-    private InputStream getFile(String s3Key, String fileType) {
+    private File getFile(String s3Key, String fileType) {
         LOG.infof("=== S3 DOWNLOAD DEBUG ===");
         LOG.infof("Requested S3 key: '%s'", s3Key);
         LOG.infof("File type: %s", fileType);
         LOG.infof("Bucket: %s", bucketName);
 
         try {
-            // Create the request to get the object from S3
+            // Create a temporary file to download the S3 object
+            String fileExtension = "";
+            if (s3Key.contains(".")) {
+                fileExtension = s3Key.substring(s3Key.lastIndexOf("."));
+            }
+            Path tempFile = Files.createTempFile("s3-download-", fileExtension);
+
+            // Download the file from S3
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(s3Key)
@@ -173,12 +180,16 @@ public class S3FileStorageService implements FileStorage {
 
             LOG.infof("Attempting to download from S3 with key: %s", s3Key);
 
-            // Get the object as ResponseInputStream and return it directly
-            var s3Object = s3Client.getObject(getObjectRequest);
-            LOG.infof("Successfully retrieved %s stream from S3: %s", fileType, s3Key);
+            // Get the object as ResponseInputStream instead of downloading to file
+            try (var s3Object = s3Client.getObject(getObjectRequest)) {
+                // Copy the S3 object data to our temporary file
+                Files.copy(s3Object, tempFile, StandardCopyOption.REPLACE_EXISTING);
 
-            // Note: The caller is responsible for closing this stream
-            return s3Object;
+                LOG.infof("Downloaded %s from S3: %s to temp file: %s", fileType, s3Key, tempFile);
+                File result = tempFile.toFile();
+                LOG.infof("Temp file exists: %s, size: %d", result.exists(), result.length());
+                return result;
+            }
 
         } catch (Exception e) {
             LOG.errorf(e, "Failed to get %s from S3 with key: '%s'", fileType, s3Key);
@@ -191,22 +202,22 @@ public class S3FileStorageService implements FileStorage {
     }
 
     @Override
-    public InputStream getImage(String imagePath) {
+    public File getImage(String imagePath) {
         return getFile(imagePath, "Image");
     }
 
     @Override
-    public InputStream getPdf(String pdfPath) {
+    public File getPdf(String pdfPath) {
         return getFile(pdfPath, "PDF");
     }
 
     @Override
-    public InputStream getAudio(String audioPath) {
+    public File getAudio(String audioPath) {
         return getFile(audioPath, "Audio");
     }
 
     @Override
-    public InputStream getVideo(String videoPath) {
+    public File getVideo(String videoPath) {
         return getFile(videoPath, "Video");
     }
 

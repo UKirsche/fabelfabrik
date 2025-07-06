@@ -3,7 +3,7 @@ package com.fabelfabrik.resource;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 
-import java.io.InputStream;
+import java.io.File;
 import java.util.Map;
 
 @Path("/api/image")
@@ -25,7 +25,7 @@ public class ImageResource extends AbstractMediaResource {
     }
 
     @Override
-    protected InputStream getFileFromStorage(String filePath) {
+    protected File getFileFromStorage(String filePath) {
         return fileStorageService.getImage(filePath);
     }
 

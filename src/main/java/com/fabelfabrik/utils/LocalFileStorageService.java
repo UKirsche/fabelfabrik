@@ -137,9 +137,9 @@ public class LocalFileStorageService implements FileStorage {
     }
 
     /**
-     * Generic method to get a file from a specific path as an InputStream
+     * Generic method to get a file from a specific path
      */
-    private InputStream getFile(String filePath, String fileType) {
+    private File getFile(String filePath, String fileType) {
         Path path = Paths.get(UPLOAD_DIR, filePath);
         File file = path.toFile();
 
@@ -148,44 +148,38 @@ public class LocalFileStorageService implements FileStorage {
             return null;
         }
 
-        try {
-            // Open the file as an InputStream
-            return Files.newInputStream(path);
-        } catch (IOException e) {
-            LOG.errorf(e, "Failed to open %s as stream: %s", fileType, filePath);
-            return null;
-        }
+        return file;
     }
 
     /**
-     * Get an image file as an InputStream
+     * Get an image file
      */
     @Override
-    public InputStream getImage(String imagePath) {
+    public File getImage(String imagePath) {
         return getFile(imagePath, "Image");
     }
 
     /**
-     * Get a PDF file as an InputStream
+     * Get a PDF file
      */
     @Override
-    public InputStream getPdf(String pdfPath) {
+    public File getPdf(String pdfPath) {
         return getFile(pdfPath, "PDF");
     }
 
     /**
-     * Get an audio file as an InputStream
+     * Get an audio file
      */
     @Override
-    public InputStream getAudio(String audioPath) {
+    public File getAudio(String audioPath) {
         return getFile(audioPath, "Audio");
     }
 
     /**
-     * Get a video file as an InputStream
+     * Get a video file
      */
     @Override
-    public InputStream getVideo(String videoPath) {
+    public File getVideo(String videoPath) {
         return getFile(videoPath, "Video");
     }
 
