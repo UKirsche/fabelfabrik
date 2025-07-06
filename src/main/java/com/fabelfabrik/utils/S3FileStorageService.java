@@ -17,8 +17,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * AWS S3 implementation of the FileStorage interface.
@@ -156,7 +159,7 @@ public class S3FileStorageService implements FileStorage {
     }
 
     /**
-     * Generic method to get a file from S3
+     * Generic method to get a file from S3 with temp space management
      */
     private File getFile(String s3Key, String fileType) {
         LOG.infof("=== S3 DOWNLOAD DEBUG ===");
@@ -165,6 +168,9 @@ public class S3FileStorageService implements FileStorage {
         LOG.infof("Bucket: %s", bucketName);
 
         try {
+            // Check and clean temp folder if necessary before download
+            cleanupTempFolderIfNeeded();
+
             // Create a temporary file to download the S3 object
             String fileExtension = "";
             if (s3Key.contains(".")) {
@@ -198,6 +204,77 @@ public class S3FileStorageService implements FileStorage {
                 LOG.errorf("Cause: %s", e.getCause().getMessage());
             }
             return null;
+        }
+    }
+
+    /**
+     * Cleans up temp folder if it exceeds 1.9GB by removing S3 download files
+     */
+    private void cleanupTempFolderIfNeeded() {
+        try {
+            Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
+            long maxSizeBytes = 1_900_000_000L; // 1.9GB in bytes
+        
+            long currentSize = calculateDirectorySize(tempDir);
+            LOG.infof("Current temp directory size: %d bytes (%.2f GB)", currentSize, currentSize / 1_000_000_000.0);
+        
+            if (currentSize > maxSizeBytes) {
+                LOG.infof("Temp directory exceeds 1.9GB, cleaning up S3 download files...");
+            
+                // Delete all files starting with "s3-download-"
+                try (var files = Files.walk(tempDir, 1)) {
+                    List<Path> s3Files = files
+                        .filter(Files::isRegularFile)
+                        .filter(path -> path.getFileName().toString().startsWith("s3-download-"))
+                        .toList();
+                
+                    long deletedSize = 0;
+                    int deletedCount = 0;
+                
+                    for (Path file : s3Files) {
+                        try {
+                            long fileSize = Files.size(file);
+                            Files.delete(file);
+                            deletedSize += fileSize;
+                            deletedCount++;
+                            LOG.infof("Deleted S3 temp file: %s (size: %d bytes)", file.getFileName(), fileSize);
+                        } catch (IOException e) {
+                            LOG.warnf("Failed to delete S3 temp file: %s - %s", file.getFileName(), e.getMessage());
+                        }
+                    }
+                
+                    LOG.infof("Cleanup completed: deleted %d S3 files, freed %d bytes (%.2f GB)", 
+                        deletedCount, deletedSize, deletedSize / 1_000_000_000.0);
+                
+                    // Log new size after cleanup
+                    long newSize = calculateDirectorySize(tempDir);
+                    LOG.infof("New temp directory size after cleanup: %d bytes (%.2f GB)", newSize, newSize / 1_000_000_000.0);
+                }
+            }
+        } catch (Exception e) {
+            LOG.errorf(e, "Error during temp folder cleanup: %s", e.getMessage());
+        }
+    }
+
+    /**
+     * Calculates the total size of a directory
+     */
+    private long calculateDirectorySize(Path directory) {
+        try (var files = Files.walk(directory, 1)) {
+            return files
+                .filter(Files::isRegularFile)
+                .mapToLong(path -> {
+                    try {
+                        return Files.size(path);
+                    } catch (IOException e) {
+                        LOG.warnf("Could not get size of file: %s - %s", path, e.getMessage());
+                        return 0L;
+                    }
+                })
+                .sum();
+        } catch (IOException e) {
+            LOG.errorf(e, "Error calculating directory size: %s", e.getMessage());
+            return 0L;
         }
     }
 
