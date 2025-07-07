@@ -11,6 +11,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import com.fabelfabrik.utils.FileSystemUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +22,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * AWS S3 implementation of the FileStorage interface.
@@ -88,10 +89,7 @@ public class S3FileStorageService implements FileStorage {
 
         try {
             // Generate a unique filename to prevent collisions
-            String fileExtension = "";
-            if (fileName.contains(".")) {
-                fileExtension = fileName.substring(fileName.lastIndexOf("."));
-            }
+            String fileExtension = getFileExtension(fileName);
             String uniqueFileName = UUID.randomUUID() + fileExtension;
 
             // Create the S3 object key
@@ -158,8 +156,15 @@ public class S3FileStorageService implements FileStorage {
         return storeFile(inputStream, fileName, VIDEO_DIR, "video");
     }
 
+
     /**
-     * Generic method to get a file from S3 with temp space management
+     * Downloads a file from an S3 bucket given a specific key and file type.
+     * The file is stored as a temporary file in the filesystem.
+     *
+     * @param s3Key The key of the file in the S3 bucket.
+     * @param fileType The type of the file to be downloaded (e.g., "image", "pdf").
+     * @return A File object representing the downloaded file,
+     *         or null if the download fails due to an error.
      */
     private File getFile(String s3Key, String fileType) {
         LOG.infof("=== S3 DOWNLOAD DEBUG ===");
@@ -169,33 +174,13 @@ public class S3FileStorageService implements FileStorage {
 
         try {
             // Check and clean temp folder if necessary before download
-            cleanupTempFolderIfNeeded();
+            FileSystemUtils.cleanupTempFolderIfNeeded();
 
-            // Create a temporary file to download the S3 object
-            String fileExtension = "";
-            if (s3Key.contains(".")) {
-                fileExtension = s3Key.substring(s3Key.lastIndexOf("."));
-            }
+            // Create a temporary file to hold S3-Object
+            String fileExtension = getFileExtension(s3Key);
             Path tempFile = Files.createTempFile("s3-download-", fileExtension);
 
-            // Download the file from S3
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(s3Key)
-                    .build();
-
-            LOG.infof("Attempting to download from S3 with key: %s", s3Key);
-
-            // Get the object as ResponseInputStream instead of downloading to file
-            try (var s3Object = s3Client.getObject(getObjectRequest)) {
-                // Copy the S3 object data to our temporary file
-                Files.copy(s3Object, tempFile, StandardCopyOption.REPLACE_EXISTING);
-
-                LOG.infof("Downloaded %s from S3: %s to temp file: %s", fileType, s3Key, tempFile);
-                File result = tempFile.toFile();
-                LOG.infof("Temp file exists: %s, size: %d", result.exists(), result.length());
-                return result;
-            }
+            return s3ToFile(s3Key, fileType, tempFile);
 
         } catch (Exception e) {
             LOG.errorf(e, "Failed to get %s from S3 with key: '%s'", fileType, s3Key);
@@ -208,74 +193,51 @@ public class S3FileStorageService implements FileStorage {
     }
 
     /**
-     * Cleans up temp folder if it exceeds 1.9GB by removing S3 download files
+     * Downloads a file from an S3 bucket given a specific key and saves it to a temporary file.
+     * This method uses an S3 client to fetch the object and writes its contents into a specified
+     * temporary file, replacing any existing file at the location.
+     *
+     * @param s3Key The key of the file in the S3 bucket.
+     * @param fileType A description of the file type being downloaded (e.g., "image", "pdf").
+     * @param tempFile The path to a temporary file where the downloaded data will be stored.
+     * @return The file object corresponding to the downloaded file.
+     * @throws IOException If an I/O error occurs during the download or file writing process.
      */
-    private void cleanupTempFolderIfNeeded() {
-        try {
-            Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
-            long maxSizeBytes = 1_900_000_000L; // 1.9GB in bytes
-        
-            long currentSize = calculateDirectorySize(tempDir);
-            LOG.infof("Current temp directory size: %d bytes (%.2f GB)", currentSize, currentSize / 1_000_000_000.0);
-        
-            if (currentSize > maxSizeBytes) {
-                LOG.infof("Temp directory exceeds 1.9GB, cleaning up S3 download files...");
-            
-                // Delete all files starting with "s3-download-"
-                try (var files = Files.walk(tempDir, 1)) {
-                    List<Path> s3Files = files
-                        .filter(Files::isRegularFile)
-                        .filter(path -> path.getFileName().toString().startsWith("s3-download-"))
-                        .toList();
-                
-                    long deletedSize = 0;
-                    int deletedCount = 0;
-                
-                    for (Path file : s3Files) {
-                        try {
-                            long fileSize = Files.size(file);
-                            Files.delete(file);
-                            deletedSize += fileSize;
-                            deletedCount++;
-                            LOG.infof("Deleted S3 temp file: %s (size: %d bytes)", file.getFileName(), fileSize);
-                        } catch (IOException e) {
-                            LOG.warnf("Failed to delete S3 temp file: %s - %s", file.getFileName(), e.getMessage());
-                        }
-                    }
-                
-                    LOG.infof("Cleanup completed: deleted %d S3 files, freed %d bytes (%.2f GB)", 
-                        deletedCount, deletedSize, deletedSize / 1_000_000_000.0);
-                
-                    // Log new size after cleanup
-                    long newSize = calculateDirectorySize(tempDir);
-                    LOG.infof("New temp directory size after cleanup: %d bytes (%.2f GB)", newSize, newSize / 1_000_000_000.0);
-                }
-            }
-        } catch (Exception e) {
-            LOG.errorf(e, "Error during temp folder cleanup: %s", e.getMessage());
+    private File s3ToFile(String s3Key, String fileType, Path tempFile) throws IOException {
+
+        // Build Request
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(s3Key)
+                .build();
+
+        LOG.infof("Attempting to download from S3 with key: %s", s3Key);
+        try (var s3Object = s3Client.getObject(getObjectRequest)) {
+            // Copy the S3 object data to our temporary file
+            Files.copy(s3Object, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            LOG.infof("Downloaded %s from S3: %s to temp file: %s", fileType, s3Key, tempFile);
+            File result = tempFile.toFile();
+            LOG.infof("Temp file exists: %s, size: %d", result.exists(), result.length());
+            return result;
         }
     }
 
     /**
-     * Calculates the total size of a directory
+     * Extracts the file extension from a given S3 key string.
+     * If the S3 key contains a period (.), the method returns the substring
+     * starting from the last period to the end of the string. If no period
+     * is present, it returns an empty string.
+     *
+     * @param s3Key The key representing the file in the S3 storage.
+     * @return The file extension including the period, or an empty string
+     *         if the S3 key does not contain a period.
      */
-    private long calculateDirectorySize(Path directory) {
-        try (var files = Files.walk(directory, 1)) {
-            return files
-                .filter(Files::isRegularFile)
-                .mapToLong(path -> {
-                    try {
-                        return Files.size(path);
-                    } catch (IOException e) {
-                        LOG.warnf("Could not get size of file: %s - %s", path, e.getMessage());
-                        return 0L;
-                    }
-                })
-                .sum();
-        } catch (IOException e) {
-            LOG.errorf(e, "Error calculating directory size: %s", e.getMessage());
-            return 0L;
+    private static String getFileExtension(String s3Key) {
+        String fileExtension = "";
+        if (s3Key.contains(".")) {
+            fileExtension = s3Key.substring(s3Key.lastIndexOf("."));
         }
+        return fileExtension;
     }
 
     @Override
